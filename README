@@ -1,0 +1,42 @@
+# AI Architecture Design Assistant
+
+This application is a web-based AI system that generates and visualizes IT system architecture plans from high-level requirements using Azure OpenAI API and Graphviz, refined through iterative prompts. It combines a backend engine for architecture generation with a frontend UI for interacting with the assistant.
+
+## Features
+- Accepts user requirements via a simple web interface.
+- Uses Language Models (Azure OpenAI) to generate architecture plans.
+- Refines architecture iteratively with follow-up prompts.
+- Visualizes architecture diagrams dynamically with Graphviz.
+- Maintains conversation state for iterative design.
+
+## Architecture Overview
+The core components of this system are:
+
+- **Frontend (`app.py`)**: Provides a web UI and API endpoints for requirements input and diagram display.
+- **Backend (`architecture_agent.py`)**: Implements architecture plan generation and refinement logic leveraging Azure OpenAI and LangGraph.
+- **Diagram Generator (`diagram_generator.py`)**: Converts architecture plans into Graphviz diagrams.
+- **Configuration (`config.py`)**: Stores API keys, endpoints, and file paths.
+- **Dependencies (`requirements.txt`)**: Lists required Python libraries like Flask, OpenAI, Graphviz, and HTTPX.
+
+The workflow involves user input on the frontend, which triggers backend architecture generation that references previous designs for iterative refinement, producing a visual diagram for review.
+
+## Setup Instructions
+1. **pip install -r requirements.txt**:
+2.  **Configure API Keys**:
+- Update `config.py` with your Azure OpenAI resource endpoint (`AZUREOPENAIENDPOINT`) and API key (`AZUREOPENAIAPIKEY`).
+- Adjust the templates path if necessary.
+3. **Run the application**:
+- python app.py
+Access the app at `http://127.0.0.1:5000`.
+
+## Usage
+- Open the web interface.
+- Enter your high-level system requirements.
+- Submit to generate an architecture plan with a visual diagram.
+- Use follow-up prompts for refinement.
+
+## License
+This project is licensed under the MIT License.
+
+## Acknowledgments
+Built with Python, Flask, Graphviz, and OpenAI GPT APIs.
