@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Architecture Design Assistant (AI)</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f3f4f6;
+    }
+
+    header {
+      background: #111827;
+      color: #f9fafb;
+      padding: 1rem 1.5rem;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.3rem;
+    }
+
+    header p {
+      margin: 0.25rem 0 0;
+      font-size: 0.9rem;
+      color: #9ca3af;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 1.4fr 2.6fr; /* 35% left, 65% right */
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      height: calc(100vh - 72px);
+      box-sizing: border-box;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #e5e7eb;
+      background: #f9fafb;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .panel-body {
+      padding: 0.75rem 1rem;
+      overflow: auto;
+    }
+
+    .input-area {
+      padding: 0.75rem 1rem;
+      border-top: 1px solid #e5e7eb;
+      background: #f9fafb;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    textarea {
+      flex: 1;
+      resize: vertical;
+      min-height: 60px;
+      max-height: 160px;
+      font-family: inherit;
+      border-radius: 0.5rem;
+      border: 1px solid #d1d5db;
+      padding: 0.5rem 0.6rem;
+    }
+
+    button {
+      border: none;
+      border-radius: 0.5rem;
+      padding: 0.6rem 1rem;
+      font-size: 0.95rem;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+      font-weight: 500;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .message {
+      margin-bottom: 0.75rem;
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .message-label {
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin-bottom: 0.15rem;
+    }
+
+    .message.user {
+      background: #eff6ff;
+      border-radius: 0.6rem;
+      padding: 0.4rem 0.6rem;
+    }
+
+    .message.assistant {
+      background: #f9fafb;
+      border-radius: 0.6rem;
+      padding: 0.4rem 0.6rem;
+    }
+
+    .diagram-container {
+      text-align: center;
+    }
+
+    .diagram-container img {
+      max-width: 100%;
+      border-radius: 0.5rem;
+      border: 1px solid #e5e7eb;
+    }
+
+    .dot-area {
+      margin-top: 0.75rem;
+    }
+
+    .dot-area textarea {
+      width: 100%;
+      min-height: 120px;
+      max-height: none;
+      font-family: "Fira Code", "Consolas", monospace;
+      font-size: 0.8rem;
+      background: #0f172a;
+      color: #e5e7eb;
+      border-color: #1f2937;
+    }
+
+    .meta {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-bottom: 0.25rem;
+    }
+
+    /* ==========================
+       NFR REVIEW STYLES
+       ========================== */
+
+    .nfr-section {
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .nfr-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.4rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .nfr-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .nfr-pill-low {
+      background: #ecfdf3;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .nfr-pill-medium {
+      background: #fffbeb;
+      color: #92400e;
+      border: 1px solid #fed7aa;
+    }
+
+    .nfr-pill-high {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+
+    .nfr-pill-neutral {
+      background: #f3f4f6;
+      color: #4b5563;
+      border: 1px solid #e5e7eb;
+    }
+
+    .nfr-summary-text {
+      font-size: 0.85rem;
+      color: #4b5563;
+      margin-bottom: 0.35rem;
+    }
+
+    .nfr-issues-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .nfr-issue {
+      border-radius: 0.55rem;
+      border: 1px solid #e5e7eb;
+      padding: 0.45rem 0.6rem;
+      background: #f9fafb;
+    }
+
+    .nfr-issue-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 0.2rem;
+    }
+
+    .nfr-issue-body {
+      font-size: 0.8rem;
+      color: #4b5563;
+      margin-bottom: 0.15rem;
+    }
+
+    .nfr-issue-recommendation {
+      font-size: 0.8rem;
+      color: #111827;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Architecture Design Assistant</h1>
+  <p>An ai based assistant</p>
+</header>
+
+<main>
+  <!-- Left: Conversation / Requirements -->
+  <section class="panel">
+    <div class="panel-header">Conversation</div>
+    <div class="panel-body" id="chat">
+      <div class="message assistant">
+        <div class="message-label">Assistant</div>
+        <div>
+          Hi, Describe your IT system (domain, scale, constraints, tech preferences, etc.)
+          and I will suggest an architecture and generate a diagram.
+        </div>
+      </div>
+    </div>
+    <div class="input-area">
+      <textarea id="userInput" placeholder="E.g. We need an e-commerce platform with web + mobile, microservices, and separate read/write DBs..."></textarea>
+      <button id="sendBtn">Generate</button>
+    </div>
+  </section>
+
+  <!-- Right: Output / Diagram / DOT / NFR / PlantUML -->
+  <section class="panel">
+    <div class="panel-header">Architecture Output</div>
+    <div class="panel-body">
+      <div id="summary" class="message assistant" style="display:none;"></div>
+
+      <div id="patternInfo" class="meta"></div>
+
+      <div class="diagram-container" id="diagramContainer" style="display:none;">
+        <p>
+            Auto generated diagram (using Graphviz).
+            <a id="openDiagramLink" href="#" target="_blank">Click here to open in new tab</a>
+        </p>
+
+        <img id="diagramImage" src="" alt="Architecture Diagram" />
+      </div>
+
+      <div class="dot-area" id="dotArea" style="display:none;">
+        <p class="meta">
+          Graphviz DOT source (editable). You can paste this into Graphviz
+          or other diagram tools that support DOT.
+        </p>
+        <textarea id="dotText" readonly></textarea>
+      </div>
+
+      <!-- NEW: PlantUML export area -->
+      <div class="dot-area" id="plantumlArea" style="display:none;">
+        <p class="meta">
+          PlantUML source (DOT wrapped). Copy & paste into a PlantUML server or IDE plugin.
+        </p>
+        <textarea id="plantumlText" readonly></textarea>
+      </div>
+
+      <!-- ==========================
+           NFR REVIEW SECTION
+           ========================== -->
+      <div id="nfrSection" class="nfr-section" style="display:none;">
+        <div class="nfr-header">
+          <span>Non-Functional Requirements (NFR) Review</span>
+          <span id="nfrRiskPill" class="nfr-pill nfr-pill-neutral">Overall risk: Unknown</span>
+        </div>
+        <p id="nfrSummary" class="nfr-summary-text"></p>
+        <div id="nfrIssues" class="nfr-issues-list"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+  const chatEl = document.getElementById("chat");
+  const userInputEl = document.getElementById("userInput");
+  const sendBtnEl = document.getElementById("sendBtn");
+  const summaryEl = document.getElementById("summary");
+  const patternInfoEl = document.getElementById("patternInfo");
+  const diagramContainerEl = document.getElementById("diagramContainer");
+  const diagramImageEl = document.getElementById("diagramImage");
+  const dotAreaEl = document.getElementById("dotArea");
+  const dotTextEl = document.getElementById("dotText");
+
+  // PlantUML elements (new)
+  const plantumlAreaEl = document.getElementById("plantumlArea");
+  const plantumlTextEl = document.getElementById("plantumlText");
+
+  // NFR elements
+  const nfrSectionEl = document.getElementById("nfrSection");
+  const nfrRiskPillEl = document.getElementById("nfrRiskPill");
+  const nfrSummaryEl = document.getElementById("nfrSummary");
+  const nfrIssuesEl = document.getElementById("nfrIssues");
+
+  // Accumulated requirements across this browser session
+  let messageHistory = [];
+
+  // Unique conversation id for this browser tab (used by backend LangGraph memory)
+  const conversationId = (crypto.randomUUID
+    ? crypto.randomUUID()
+    : Math.random().toString(36).substring(2));
+
+  function appendMessage(role, text) {
+    const div = document.createElement("div");
+    div.className = "message " + role;
+    const label = document.createElement("div");
+    label.className = "message-label";
+    label.textContent = role === "user" ? "You" : "Assistant";
+    const body = document.createElement("div");
+    body.textContent = text;
+    div.appendChild(label);
+    div.appendChild(body);
+    chatEl.appendChild(div);
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
+
+  function renderNfrReport(nfr) {
+    // If no NFR report, hide the section
+    if (!nfr) {
+      nfrSectionEl.style.display = "none";
+      return;
+    }
+
+    nfrSectionEl.style.display = "block";
+
+    const overall = (nfr.overall_risk || "Unknown").toLowerCase();
+    let pillClass = "nfr-pill-neutral";
+    if (overall === "low") {
+      pillClass = "nfr-pill-low";
+    } else if (overall === "medium") {
+      pillClass = "nfr-pill-medium";
+    } else if (overall === "high") {
+      pillClass = "nfr-pill-high";
+    }
+
+    nfrRiskPillEl.className = "nfr-pill " + pillClass;
+    nfrRiskPillEl.textContent = "Overall risk: " + (nfr.overall_risk || "Unknown");
+
+    nfrSummaryEl.textContent = nfr.summary || "No NFR summary available.";
+
+    const issues = Array.isArray(nfr.issues) ? nfr.issues : [];
+    nfrIssuesEl.innerHTML = "";
+
+    if (issues.length === 0) {
+      const p = document.createElement("p");
+      p.className = "meta";
+      p.textContent = "No specific NFR issues reported.";
+      nfrIssuesEl.appendChild(p);
+      return;
+    }
+
+    issues.forEach((issue) => {
+      const issueDiv = document.createElement("div");
+      issueDiv.className = "nfr-issue";
+
+      const title = document.createElement("div");
+      title.className = "nfr-issue-title";
+      const cat = issue.category || "General";
+      const sev = issue.severity || "Unknown";
+      title.textContent = cat + " (" + sev + ")";
+
+      const body = document.createElement("div");
+      body.className = "nfr-issue-body";
+      if (issue.finding) {
+        body.textContent = issue.finding;
+      }
+
+      const rec = document.createElement("div");
+      rec.className = "nfr-issue-recommendation";
+      if (issue.recommendation) {
+        rec.textContent = "Recommendation: " + issue.recommendation;
+      }
+
+      issueDiv.appendChild(title);
+      if (issue.finding) issueDiv.appendChild(body);
+      if (issue.recommendation) issueDiv.appendChild(rec);
+
+      nfrIssuesEl.appendChild(issueDiv);
+    });
+  }
+
+  async function sendMessage() {
+    const text = userInputEl.value.trim();
+    if (!text) return;
+
+    appendMessage("user", text);
+
+    // Clear input and disable button while thinking
+    userInputEl.value = "";
+    sendBtnEl.disabled = true;
+    sendBtnEl.textContent = "Thinking…";
+
+    const payload = {
+      message: text,
+      history: messageHistory,
+      conversation_id: conversationId
+    };
+
+    // After building payload, push current message into history
+    messageHistory.push(text);
+
+    try {
+      const resp = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}));
+        const msg = errorData.error || "Unexpected error from server.";
+        appendMessage("assistant", "Error: " + msg);
+        return;
+      }
+
+      const data = await resp.json();
+      console.log("API response:", data);
+
+      // Show summary with timestamp so you can see it changed
+      const ts = new Date().toLocaleTimeString();
+      summaryEl.style.display = "block";
+      summaryEl.innerHTML =
+        "<div class='message-label'>Architecture Summary (" + ts + ")</div><div>" +
+        (data.summary || "No summary.") +
+        "</div>";
+
+      patternInfoEl.textContent = data.pattern_id
+        ? ("Selected pattern: " + data.pattern_id)
+        : "";
+
+      // Show diagram (force refresh with cache-busting query param)
+      if (data.image_url) {
+        diagramContainerEl.style.display = "block";
+
+        const fullUrl = data.image_url + "?t=" + Date.now();
+        diagramImageEl.src = fullUrl;
+        document.getElementById("openDiagramLink").href = fullUrl;
+      }
+
+      // Show DOT code + PlantUML export
+      if (data.dot) {
+        dotAreaEl.style.display = "block";
+        dotTextEl.value = data.dot;
+
+        const plantumlSource = "@startuml\n" + data.dot + "\n@enduml";
+        plantumlAreaEl.style.display = "block";
+        plantumlTextEl.value = plantumlSource;
+      } else {
+        dotAreaEl.style.display = "none";
+        plantumlAreaEl.style.display = "none";
+        dotTextEl.value = "";
+        plantumlTextEl.value = "";
+      }
+
+      // Render NFR report
+      renderNfrReport(data.nfr_report);
+
+      appendMessage(
+        "assistant",
+        "I've generated an architecture and diagram based on the full set of requirements so far."
+      );
+    } catch (err) {
+      console.error(err);
+      appendMessage("assistant", "Error calling backend: " + err.message);
+    } finally {
+      sendBtnEl.disabled = false;
+      sendBtnEl.textContent = "Generate";
+    }
+  }
+
+  sendBtnEl.addEventListener("click", sendMessage);
+  userInputEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+</script>
+</body>
+</html>
